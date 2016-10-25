@@ -7,8 +7,11 @@
 import argparse
 import xml.etree.ElementTree as ET
 import os,sys
+from collections import defaultdict 
 
-known = "pkg-config,pluginlib,boost,visualization_msgs,sensor_msgs,rospy,roslibs,catkin,roscpp,cmake_modules,geometry_msgs,tf,message_generation,urdf,xacro,message_runtime,std_msgs,std_srvs"
+known = set("pkg-config,pluginlib,boost,visualization_msgs,sensor_msgs,rospy,roslibs,catkin,roscpp,cmake_modules,geometry_msgs,tf,message_generation,urdf,xacro,message_runtime,std_msgs,std_srvs".split(","))
+known = known | set("twist_mux,gazebo_ros,interactive_marker_twist_server,actionlib,kdl_parser,trajectory_msgs,control_msgs,orocos_kdl,tf_conversions,cv_bridge".split(","))
+known = known | set("fh_config,fh_description".split(","))
 
 def commonpath(path1,path2):
 	p1 = path1.split(os.sep)
@@ -97,10 +100,10 @@ if __name__ == '__main__':
 	if args.stats:
 		sknown = set(known.split(","))
 		inp = set(allpacks.keys())
-		allp = reduce(lambda x,y: x|y,[v for v in allpacks.values()],set())
+		allp = reduce(lambda x,y: x|y,[v["deps"] for v in allpacks.values()],set())
 		ext = allp-inp-sknown
 		print "total packages",len(allpacks)
-		print "external packages,",len(ext)
+		print "external packages",len(ext)
 		if args.list:
 			print "\n".join(sorted(list(ext)))
 		sys.exit(0)
@@ -113,36 +116,44 @@ if __name__ == '__main__':
 	done = set()
 	ds = set()
 	todo = set(args.package)
+	originator = defaultdict(set)
 	while len(todo) > 0:
 		p = todo.pop()
 		done.add(p)
 		pi = allpacks.get(p)
 
-		if pi is not None and os.path.isdir(pi["path"]):
-			if not args.abs:
-				sp = os.path.join(b2a,pi["relroot"])
+		if pi is None:
+			if p not in known:
+				print "unknown package",p,"from",originator[p]
+			continue
+
+		if pi["type"] != "meta":
+			if not args.abs:				
+				sp = os.path.join(b2a,pi["path"])
 			else:
-				sp = os.path.join(args.full,pi["relroot"])
-			dp = os.path.join(args.dest,pi["relroot"])
+				sp = os.path.join(args.full,pi["path"])
+			dp = os.path.join(args.dest,pi["path"])
 
 			if args.simulate:
 				print "symlink",sp,dp
-			elif not os.path.isdir(dp):
+			elif not os.path.islink(dp) and not os.path.isdir(dp):
 				pdp = os.path.split(dp)[0]
 				if not os.path.isdir(pdp):
 					os.makedirs(pdp)
 				os.symlink(sp,dp)
 
-			# dependencies are all full packages
-			deps = pi["deps"]
-			todo = todo | (deps-done)
+		# dependencies are all full packages
+		deps = pi["deps"]
+		for d in deps:
+			originator[d].add(p)
+		todo = todo | (deps-done)
 
 	for p in done:
 		pi = allpacks.get(p)
 		if pi is not None:
 			missing = pi["deps"]-done
 			if len(missing) > 0:
-				print p,"externals: ",",".join(list(needed))
+				print p,"externals: ",",".join(list(missing))
 
 
 
