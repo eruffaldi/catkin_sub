@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import os,sys
 from collections import defaultdict 
 
-known = set("pkg-config,pluginlib,boost,visualization_msgs,sensor_msgs,rospy,roslibs,catkin,roscpp,cmake_modules,geometry_msgs,tf,message_generation,urdf,xacro,message_runtime,std_msgs,std_srvs".split(","))
+known = set("pkg-config,pluginlib,boost,actionlib_msgs,visualization_msgs,sensor_msgs,rospy,roslibs,catkin,roscpp,cmake_modules,geometry_msgs,tf,message_generation,urdf,xacro,message_runtime,std_msgs,std_srvs".split(","))
 known = known | set("twist_mux,gazebo_ros,interactive_marker_twist_server,actionlib,kdl_parser,trajectory_msgs,control_msgs,orocos_kdl,tf_conversions,cv_bridge".split(","))
 known = known | set("fh_config,fh_description".split(","))
 
@@ -70,7 +70,7 @@ def getpacks(root,relroot):
 				rp = os.path.join(relroot,l)
 				zz = getpacks(fp,rp) # ignore conflicts
 				S = dict(type="meta",deps=set(),path=rp,children=zz)
-				z[l] = S
+				z[l] = S	
 				z.update(zz)
 
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 	#TODO: support multiple full paths	
 	parser = argparse.ArgumentParser(description='Catkin Partial Tree')
 	parser.add_argument('package',nargs='*',help='needed packages')
-	parser.add_argument('--full',help='full source base with all packages')
+	parser.add_argument('--full',required=True,help='full source base with all packages')
 	parser.add_argument('--dest',default="src",help='destination path')
 	parser.add_argument('--simulate',action="store_true")
 	parser.add_argument('--abs',action="store_true",help="abs paths")
