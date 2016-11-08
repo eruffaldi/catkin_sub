@@ -1,8 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Catking Subfolders 
 # Emanuele Ruffaldi @ SSSA 2016
-#
 #
 import argparse
 import xml.etree.ElementTree as ET
