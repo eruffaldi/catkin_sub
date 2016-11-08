@@ -40,7 +40,7 @@ def commonpath(path1,path2):
 		b2a = os.sep.join([".." for j in range(0,len(p2)-i)]+p1[i:])
 	return common,a2b,b2a
 
-def getpackdeps(path):
+def getpackinfo(path):
 	# look into package.xml
 	#		buildtool_depend
 	#		build_depend
@@ -54,14 +54,22 @@ def getpackdeps(path):
 		r.add(x.text)
 	for x in root.iter('run_depend'):
 		r.add(x.text)
-	return r
+	return dict(deps=r,name=list(root.iter('name'))[0].text)
+
+
 
 def getpacks(root,relroot):
 	# direct if contains package.xml
 	z ={}
 	pf = os.path.join(root,"package.xml")
 	if os.path.isfile(pf):
-		z[os.path.split(root)[1]] = dict(type="pack",deps=getpackdeps(pf),path=relroot,children=[])
+		pi = getpackinfo(pf)
+		#os.path.split(root)[1]
+		name = pi["name"]
+		wname = os.path.split(root)[1]
+		if wname != name:
+			print "Warning: package name mismatch",root,name
+		z[name] = dict(type="pack",deps=pi["deps"],name=name,path=relroot,children=[])
 	else:
 		for l in os.listdir(root):
 			fp = os.path.join(root,l)
@@ -131,9 +139,10 @@ if __name__ == '__main__':
 				sp = os.path.join(b2a,pi["path"])
 			else:
 				sp = os.path.join(args.full,pi["path"])
-			dp = os.path.join(args.dest,pi["path"])
 
+			dp = os.path.join(args.dest,pi["path"])
 			if args.simulate:
+				print "#processing",args.dest,pi
 				print "symlink",sp,dp
 			elif not os.path.islink(dp) and not os.path.isdir(dp):
 				pdp = os.path.split(dp)[0]
