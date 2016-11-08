@@ -87,7 +87,7 @@ if __name__ == '__main__':
 	parser.add_argument('--full',required=True,help='full source base with all packages')
 	parser.add_argument('--dest',default="src",help='destination path')
 	parser.add_argument('--simulate',action="store_true")
-	parser.add_argument('--abs',action="store_true",help="abs paths")
+	parser.add_argument('--rel',action="store_true",help="rel paths")
 	parser.add_argument('--stats',action="store_true",help="stats only")
 	parser.add_argument('--list',action="store_true",help="stats only")
 
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 			continue
 
 		if pi["type"] != "meta":
-			if not args.abs:				
+			if args.rel:				
 				sp = os.path.join(b2a,pi["path"])
 			else:
 				sp = os.path.join(args.full,pi["path"])
